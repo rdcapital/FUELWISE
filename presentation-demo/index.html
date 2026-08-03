@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FuelWise Demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, system-ui, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: #07111f;
+        color: #f8fafc;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        background: #0f172a;
+        padding: 24px 16px;
+        border-right: 1px solid #1e293b;
+      }
+
+      .sidebar h2 {
+        margin: 0 0 24px;
+        font-size: 1.2rem;
+      }
+
+      .nav {
+        display: grid;
+        gap: 8px;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: #cbd5e1;
+        padding: 10px 12px;
+        border-radius: 10px;
+      }
+
+      .nav a.active {
+        background: #2563eb;
+        color: white;
+      }
+
+      .main {
+        padding: 24px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .pill {
+        background: #1d4ed8;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 0.9rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+
+      .card {
+        background: #111c31;
+        border: 1px solid #1e293b;
+        border-radius: 16px;
+        padding: 18px;
+      }
+
+      form {
+        display: grid;
+        gap: 10px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-weight: 600;
+      }
+
+      input {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: white;
+      }
+
+      button {
+        margin-top: 6px;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #38bdf8, #2563eb);
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .stats {
+        display: grid;
+        gap: 10px;
+      }
+
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 12px;
+        background: #0f172a;
+        border-radius: 10px;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      li {
+        display: flex;
+        justify-content: space-between;
+        background: #0f172a;
+        padding: 10px 12px;
+        border-radius: 10px;
+      }
+
+      @media (max-width: 900px) {
+        .app { grid-template-columns: 1fr; }
+        .sidebar { border-right: none; border-bottom: 1px solid #1e293b; }
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <h2>FuelWise</h2>
+        <div class="nav">
+          <a href="#" class="active">Dashboard</a>
+          <a href="#">Add Fuel</a>
+          <a href="#">History</a>
+          <a href="#">Reports</a>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <div>
+            <h1 style="margin:0; font-size:1.5rem;">Fuel Log Dashboard</h1>
+            <p style="margin:4px 0 0; color:#94a3b8;">Simple duplicate of the app layout</p>
+          </div>
+          <div class="pill">Simple demo</div>
+        </div>
+
+        <div class="grid">
+          <section class="card">
+            <h3>Add a trip</h3>
+            <form id="tripForm">
+              <label>
+                Date
+                <input type="date" id="date" required />
+              </label>
+              <label>
+                Distance (km)
+                <input type="number" id="distance" min="1" step="0.1" required />
+              </label>
+              <label>
+                Fuel used (L)
+                <input type="number" id="fuel" min="0.1" step="0.1" required />
+              </label>
+              <label>
+                Price per litre (R)
+                <input type="number" id="price" min="0.1" step="0.1" required />
+              </label>
+              <button type="submit">Save trip</button>
+            </form>
+          </section>
+
+          <section class="card">
+            <h3>Summary</h3>
+            <div class="stats">
+              <div class="stat-row"><span>Efficiency</span><strong id="efficiency">0.0 km/L</strong></div>
+              <div class="stat-row"><span>Total distance</span><strong id="totalDistance">0 km</strong></div>
+              <div class="stat-row"><span>Total cost</span><strong id="totalCost">R0.00</strong></div>
+            </div>
+          </section>
+        </div>
+
+        <section class="card">
+          <h3>Recent trips</h3>
+          <ul id="tripList"></ul>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const key = 'simple-fuel-demo';
+      const form = document.getElementById('tripForm');
+      const list = document.getElementById('tripList');
+      const efficiencyEl = document.getElementById('efficiency');
+      const distanceEl = document.getElementById('totalDistance');
+      const costEl = document.getElementById('totalCost');
+
+      let entries = JSON.parse(localStorage.getItem(key) || 'null');
+      if (!entries || entries.length === 0) {
+        entries = [
+          { date: '2026-07-20', distance: 120, fuel: 10, price: 18.5 },
+          { date: '2026-07-24', distance: 95, fuel: 8, price: 18.2 }
+        ];
+        localStorage.setItem(key, JSON.stringify(entries));
+      }
+
+      function money(value) {
+        return 'R' + value.toFixed(2);
+      }
+
+      function render() {
+        const totalDistance = entries.reduce((sum, item) => sum + Number(item.distance), 0);
+        const totalFuel = entries.reduce((sum, item) => sum + Number(item.fuel), 0);
+        const totalCost = entries.reduce((sum, item) => sum + Number(item.fuel) * Number(item.price), 0);
+        const avgEfficiency = totalFuel ? totalDistance / totalFuel : 0;
+
+        efficiencyEl.textContent = avgEfficiency.toFixed(1) + ' km/L';
+        distanceEl.textContent = totalDistance.toFixed(0) + ' km';
+        costEl.textContent = money(totalCost);
+
+        list.innerHTML = entries.map(entry => {
+          const cost = Number(entry.fuel) * Number(entry.price);
+          const eff = Number(entry.distance) / Number(entry.fuel);
+          return `<li><div><strong>${entry.date}</strong><br>${entry.distance} km · ${entry.fuel} L</div><div>${eff.toFixed(1)} km/L<br>${money(cost)}</div></li>`;
+        }).join('');
+      }
+
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        const entry = {
+          date: document.getElementById('date').value || 'Today',
+          distance: Number(document.getElementById('distance').value),
+          fuel: Number(document.getElementById('fuel').value),
+          price: Number(document.getElementById('price').value)
+        };
+
+        entries.unshift(entry);
+        localStorage.setItem(key, JSON.stringify(entries));
+        form.reset();
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
